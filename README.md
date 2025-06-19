@@ -37,12 +37,3 @@ passport-buddy/
 - **Database:** MongoDB
 - **Infrastructure:** Docker + Docker Compose
 
-## Next Steps
-
-1. Implement user authentication
-2. Add flight logging functionality
-3. Create travel post features
-4. Build interactive map view
-5. Add travel statistics
-
-Happy coding! ✈️🌍
