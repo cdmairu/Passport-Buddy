@@ -1,0 +1,17 @@
+{
+  "name": "passport-buddy",
+  "version": "1.0.0",
+  "description": "Passport Buddy Application",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo 'Error: no test specified' && exit 1",
+    "dev": "nodemon index.js",
+    "build": "echo 'No build step required'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {}
+}
