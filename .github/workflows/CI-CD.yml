@@ -209,21 +209,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup SSH key
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.DROPLET_IP }} >> ~/.ssh/known_hosts
+          echo -e "Host *\n\tStrictHostKeyChecking no\n\tUserKnownHostsFile=/dev/null\n" > ~/.ssh/config
+          chmod 600 ~/.ssh/config
 
       - name: Verify SSH connection
         run: |
-          ssh -i ~/.ssh/id_rsa -o ConnectTimeout=10 \
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o ConnectTimeout=10 \
             ${{ secrets.SSH_USER }}@${{ secrets.DROPLET_IP }} 'echo "SSH connection successful"'
 
       - name: Install Docker if needed
         run: |
-          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.DROPLET_IP }} '
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh ${{ secrets.SSH_USER }}@${{ secrets.DROPLET_IP }} '
             if ! command -v docker &> /dev/null; then
               echo "Installing Docker..."
               curl -fsSL https://get.docker.com -o get-docker.sh
@@ -241,20 +243,20 @@ jobs:
 
       - name: Create deployment directory
         run: |
-          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.DROPLET_IP }} '
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh ${{ secrets.SSH_USER }}@${{ secrets.DROPLET_IP }} '
             sudo mkdir -p /opt/passport-buddy
             sudo chown -R $USER:$USER /opt/passport-buddy
           '
 
       - name: Copy docker-compose files
         run: |
-          scp -i ~/.ssh/id_rsa \
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" scp \
             ./docker-compose.yml \
             ${{ secrets.SSH_USER }}@${{ secrets.DROPLET_IP }}:/opt/passport-buddy/
 
       - name: Create production environment file
         run: |
-          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.DROPLET_IP }} '
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh ${{ secrets.SSH_USER }}@${{ secrets.DROPLET_IP }} '
             cat > /opt/passport-buddy/.env << EOF
             NODE_ENV=production
             MONGODB_URI=${{ secrets.MONGODB_URI }}
@@ -269,7 +271,7 @@ jobs:
 
       - name: Create production docker-compose override
         run: |
-          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.DROPLET_IP }} '
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh ${{ secrets.SSH_USER }}@${{ secrets.DROPLET_IP }} '
             cat > /opt/passport-buddy/docker-compose.prod.yml << 'EOF'
             version: '3.8'
             services:
@@ -321,13 +323,13 @@ jobs:
 
       - name: Log in to Container Registry on server
         run: |
-          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.DROPLET_IP }} '
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh ${{ secrets.SSH_USER }}@${{ secrets.DROPLET_IP }} '
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
           '
 
       - name: Deploy application
         run: |
-          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.DROPLET_IP }} '
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh ${{ secrets.SSH_USER }}@${{ secrets.DROPLET_IP }} '
             cd /opt/passport-buddy
             
             # Pull latest images
@@ -369,7 +371,7 @@ jobs:
 
       - name: Configure reverse proxy (Nginx)
         run: |
-          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.DROPLET_IP }} '
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh ${{ secrets.SSH_USER }}@${{ secrets.DROPLET_IP }} '
             # Install Nginx if not present
             if ! command -v nginx &> /dev/null; then
               sudo apt update
@@ -441,7 +443,7 @@ jobs:
         run: |
           echo "Running comprehensive health checks..."
           
-          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.DROPLET_IP }} '
+          sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh ${{ secrets.SSH_USER }}@${{ secrets.DROPLET_IP }} '
             cd /opt/passport-buddy
             
             # Check container status
