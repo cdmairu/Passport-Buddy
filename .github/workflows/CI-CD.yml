@@ -1,4 +1,4 @@
-name: CI-CD Pipeline to droplet
+name: CI-CD Pipeline
 
 on:
   push:
@@ -29,9 +29,10 @@ jobs:
               mkdir -p /var/www/passport-buddy
               cd /var/www/passport-buddy
               git init
-              git remote add origin https://github.com/cdmairu/Passport-Buddy
+              git remote add origin https://github.com/cdmairu/Passport-Buddy.git
             else
               cd /var/www/passport-buddy
+              git remote set-url origin https://github.com/cdmairu/Passport-Buddy.git
             fi
             git pull origin main
             npm install
